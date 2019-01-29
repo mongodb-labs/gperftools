@@ -44,7 +44,11 @@ default_enable_heap_checker=yes
 default_enable_debugalloc=yes
 default_enable_minimal=no
 default_tcmalloc_alignment=16
+<<<<<<< HEAD
 default_libc_override=yes
+=======
+default_tcmalloc_maxsize=256
+>>>>>>> c003846... Allow kMaxSize to be configurable.
 need_nanosleep=yes   # Used later, to decide if to run ACX_NANOSLEEP
 case "$host" in
    *-mingw*) default_enable_minimal=yes; default_enable_debugalloc=no;
@@ -118,6 +122,11 @@ AC_ARG_WITH([tcmalloc-alignment],
                             [Set the tcmalloc allocation alignment to 8 or 16 bytes])],
             [],
             [with_tcmalloc_alignment=$default_tcmalloc_alignment])
+AC_ARG_WITH([tcmalloc-maxsize],
+            [AS_HELP_STRING([--with-tcmalloc-maxsize],
+                            [Set the tcmalloc internal max size for cached allocations in KB])],
+            [],
+            [with_tcmalloc_maxsize=$default_tcmalloc_maxsize])
 
 AC_ARG_ENABLE([tcmalloc-aggressive-merge],
               [AS_HELP_STRING([--enable-tcmalloc-aggressive-merge],
@@ -153,11 +162,16 @@ case "$with_tcmalloc_alignment" in
   *)
        AC_MSG_WARN([${with_tcmalloc_alignment} bytes not supported, using default tcmalloc allocation alignment.])
 esac
+
+AC_DEFINE_UNQUOTED(TCMALLOC_MAX_SIZE_KB, [$with_tcmalloc_maxsize],
+          [Define max size of cached allocations for tcmalloc])
+
 AC_ARG_ENABLE([libc-override],
               [AS_HELP_STRING([--disable-libc-override],
                               [do not override malloc in libc])],
               [],
               [enable_libc_override="$default_libc_override"])
+              
 AS_IF([test "x$enable_libc_override" = "xno"],
       [AC_DEFINE([TCMALLOC_ENABLE_LIBC_OVERRIDE], 0,
                  [Define to 0 to disable malloc override in libc.])],
