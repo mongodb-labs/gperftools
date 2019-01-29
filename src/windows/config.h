@@ -320,11 +320,8 @@
 /* the namespace where STL code like vector<> is defined */
 #define STL_NAMESPACE std
 
-/* Define 32K of internal pages size for tcmalloc */
-/* #undef TCMALLOC_32K_PAGES */
-
-/* Define 64K of internal pages size for tcmalloc */
-/* #undef TCMALLOC_64K_PAGES */
+/* Define internal page size for tcmalloc as number of left bitshift */
+/* #undef TCMALLOC_PAGE_SIZE_SHIFT */
 
 /* Define 8 bytes of allocation alignment for tcmalloc */
 /* #undef TCMALLOC_ALIGN_8BYTES */
