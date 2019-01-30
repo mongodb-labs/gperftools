@@ -118,6 +118,17 @@ AC_ARG_WITH([tcmalloc-alignment],
             [],
             [with_tcmalloc_alignment=$default_tcmalloc_alignment])
 
+AC_ARG_ENABLE([tcmalloc-aggressive-merge],
+              [AS_HELP_STRING([--enable-tcmalloc-aggressive-merge],
+                              [Try harder to reduce the number of size classes])],
+              [],
+              [enable_tcmalloc_aggressive_merge=no])
+
+AS_IF([test "x$enable_tcmalloc_aggressive_merge" = "xyes"],
+      [AC_DEFINE([TCMALLOC_AGGRESSIVE_MERGE], 1,
+                 [Define to 1 to try to reduce the number of size classes.])],
+      [])
+
 case "$with_tcmalloc_pagesize" in
   8)
        #Default tcmalloc page size.

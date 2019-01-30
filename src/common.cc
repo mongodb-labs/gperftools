@@ -46,6 +46,12 @@ static int32 FLAGS_tcmalloc_transfer_num_objects;
 
 static const int32 kDefaultTransferNumObjecs = 32;
 
+#if TCMALLOC_AGGRESSIVE_MERGE
+static const bool kUseAggressiveMerge = true;
+#else
+static const bool kUseAggressiveMerge = false;
+#endif
+
 // The init function is provided to explicit initialize the variable value
 // from the env. var to avoid C++ global construction that might defer its
 // initialization after a malloc/new call.
@@ -74,6 +80,19 @@ static inline int LgFloor(size_t n) {
   return log;
 }
 
+// Return the largest power of 2 of which 'n' is a multiple.
+// Result is clipped to the closed interval [kMinAlign,kPageSize].
+static size_t NaturalAlignment(size_t n) {
+  if ((n & (kMinAlign-1)) != 0)
+    return kMinAlign;
+  for (size_t a = kMinAlign; a < kPageSize; a <<= 1) {
+    if ((n & a) != 0) {
+      return a;
+    }
+  }
+  return kPageSize;
+}
+
 int AlignmentForSize(size_t size) {
   int alignment = kAlignment;
   if (size > kMaxSize) {
@@ -94,6 +113,61 @@ int AlignmentForSize(size_t size) {
   CHECK_CONDITION(size < kMinAlign || alignment >= kMinAlign);
   CHECK_CONDITION((alignment & (alignment - 1)) == 0);
   return alignment;
+}
+
+// Evaluate merging positions in [first, last) into [first, first+1).
+static bool MergeOkayByFragmentation(const size_t *class_to_pages, const int32 *class_to_size,
+                                     size_t first, size_t last) {
+  if (last < first + 2) {
+    return true;  // Nops are okay.
+  }
+  const size_t merge_top = last - 1;
+  const size_t top_pages = class_to_pages[merge_top];
+  const size_t top_size = class_to_size[merge_top];
+  const size_t top_span_size = top_pages << kPageShift;
+  const size_t top_objects = top_span_size / top_size;
+  for (int i = first; i < merge_top; ++i) {
+    const size_t prev_pages = class_to_pages[i];
+    const size_t prev_size = class_to_size[i];
+    if (kUseAggressiveMerge) {
+      // See if we can merge this into the previous class(es) without
+      // the fragmentation of any of them going over 12.5%.
+      size_t used = prev_size * top_objects;
+      size_t waste = top_span_size - used;
+      if (waste > (top_span_size >> 3)) {
+        return false;
+      }
+    } else {
+      if (prev_pages != top_pages) {
+        return false;
+      }
+      // See if we can merge this into the previous class without
+      // increasing the fragmentation of the previous class.
+      const size_t prev_objects = top_span_size / prev_size;
+      if (top_objects != prev_objects) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+// Evaluate merging positions in [first, last) into [first, first+1).
+static bool MergeOkayByNaturalAlignment(const int32 *class_to_size, size_t first, size_t last) {
+  if (last < first + 2) {
+    return true;  // Nops are okay.
+  }
+  const size_t merge_top = last - 1;
+  const size_t top_size = class_to_size[merge_top];
+  for (size_t i = first; i < merge_top; ++i) {
+    size_t prev_size = class_to_size[i];
+    if (prev_size < kPageSize) {
+      if (NaturalAlignment(top_size) < NaturalAlignment(prev_size)) {
+        return false;
+      }
+    }
+  }
+  return true;
 }
 
 int SizeMap::NumMoveSize(size_t size) {
@@ -134,11 +208,10 @@ void SizeMap::Init() {
 
   // Compute the size classes we want to use
   int sc = 1;   // Next size class to assign
-  int alignment = kAlignment;
+  int merge_edge = sc;  // leftmost boundary of merge evaluation.
   CHECK_CONDITION(kAlignment <= kMinAlign);
-  for (size_t size = kAlignment; size <= kMaxSize; size += alignment) {
-    alignment = AlignmentForSize(size);
-    CHECK_CONDITION((size % alignment) == 0);
+  for (size_t size = kAlignment; size <= kMaxSize; size += AlignmentForSize(size)) {
+    CHECK_CONDITION((size % AlignmentForSize(size)) == 0);
 
     int blocks_to_move = NumMoveSize(size) / 4;
     size_t psize = 0;
@@ -155,23 +228,29 @@ void SizeMap::Init() {
     } while ((psize / size) < (blocks_to_move));
     const size_t my_pages = psize >> kPageShift;
 
-    if (sc > 1 && my_pages == class_to_pages_[sc-1]) {
-      // See if we can merge this into the previous class without
-      // increasing the fragmentation of the previous class.
-      const size_t my_objects = (my_pages << kPageShift) / size;
-      const size_t prev_objects = (class_to_pages_[sc-1] << kPageShift)
-                                  / class_to_size_[sc-1];
-      if (my_objects == prev_objects) {
-        // Adjust last class to include this size
-        class_to_size_[sc-1] = size;
-        continue;
-      }
-    }
-
     // Add new class
+    CHECK_CONDITION(sc < kClassSizesMax);
     class_to_pages_[sc] = my_pages;
     class_to_size_[sc] = size;
     sc++;
+
+    // Evaluate merging [merge_edge, sc) to become [merge_edge, merge_edge + 1).
+    if (MergeOkayByFragmentation(class_to_pages_, class_to_size_, merge_edge, sc)) {
+      continue;  // Keep probing to find the greediest merge w.r.t. fragmentation.
+    }
+    --sc;  // Back out of the failing element.
+    // Now the greediest merge w.r.t. fragmentation is [merge_edge, sc).
+    // Ensure there are no alignment reductions in the merge.
+    // Shrink the merge from the right until natural alignments are not reduced by it.
+    while (!MergeOkayByNaturalAlignment(class_to_size_, merge_edge, sc)) {
+      --sc;
+    }
+
+    class_to_size_[merge_edge] = class_to_size_[sc - 1];
+    class_to_pages_[merge_edge] = class_to_pages_[sc - 1];
+    ++merge_edge;
+    sc = merge_edge;
+    size = class_to_size_[sc - 1];  // restore the `size` invariant
   }
   num_size_classes = sc;
   if (sc > kClassSizesMax) {
