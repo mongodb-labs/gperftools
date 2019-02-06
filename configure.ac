@@ -148,9 +148,10 @@ AC_ARG_ENABLE([libc-override],
               [],
               [enable_libc_override="$default_libc_override"])
 AS_IF([test "x$enable_libc_override" = "xno"],
-      [AC_DEFINE([TCMALLOC_DISABLE_LIBC_OVERRIDE], 1,
-                 [Define to 1 to disable malloc override in libc.])],
-      [])
+      [AC_DEFINE([TCMALLOC_ENABLE_LIBC_OVERRIDE], 0,
+                 [Define to 0 to disable malloc override in libc.])],
+      [AC_DEFINE([TCMALLOC_ENABLE_LIBC_OVERRIDE], 1,
+                 [Define to 0 to disable malloc override in libc.])])
 
 # Checks for programs.
 AC_PROG_CXX

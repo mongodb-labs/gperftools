@@ -329,6 +329,9 @@
 /* Define 8 bytes of allocation alignment for tcmalloc */
 /* #undef TCMALLOC_ALIGN_8BYTES */
 
+/* Define to 0 to disable malloc override in libc. */
+#define TCMALLOC_ENABLE_LIBC_OVERRIDE 1
+
 /* Version number of package */
 #define VERSION "2.7"
 

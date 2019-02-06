@@ -66,7 +66,7 @@
 #define CPP_BADALLOC throw(std::bad_alloc)
 #endif
 
-#if !defined(TCMALLOC_DISABLE_LIBC_OVERRIDE) || TCMALLOC_DISABLE_LIBC_OVERRIDE != 1
+#if TCMALLOC_ENABLE_LIBC_OVERRIDE
 
 static void ReplaceSystemAlloc();  // defined in the .h files below
 
@@ -98,10 +98,10 @@ static void ReplaceSystemAlloc() { PatchWindowsFunctions(); }
 
 #endif
 
-#else   // #if !defined(TCMALLOC_DISABLE_LIBC_OVERRIDE) || TCMALLOC_DISABLE_LIBC_OVERRIDE != 1
+#else   // TCMALLOC_ENABLE_LIBC_OVERRIDE
 
 static void ReplaceSystemAlloc() {}
 
-#endif  // #if !defined(TCMALLOC_DISABLE_LIBC_OVERRIDE) || TCMALLOC_DISABLE_LIBC_OVERRIDE != 1
+#endif  // TCMALLOC_ENABLE_LIBC_OVERRIDE
 
 #endif  // TCMALLOC_LIBC_OVERRIDE_INL_H_
