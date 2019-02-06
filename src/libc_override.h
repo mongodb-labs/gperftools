@@ -66,6 +66,8 @@
 #define CPP_BADALLOC throw(std::bad_alloc)
 #endif
 
+#if TCMALLOC_ENABLE_LIBC_OVERRIDE
+
 static void ReplaceSystemAlloc();  // defined in the .h files below
 
 // For windows, there are two ways to get tcmalloc.  If we're
@@ -95,5 +97,11 @@ static void ReplaceSystemAlloc() { PatchWindowsFunctions(); }
 #error Need to add support for your libc/OS here
 
 #endif
+
+#else   // TCMALLOC_ENABLE_LIBC_OVERRIDE
+
+static void ReplaceSystemAlloc() {}
+
+#endif  // TCMALLOC_ENABLE_LIBC_OVERRIDE
 
 #endif  // TCMALLOC_LIBC_OVERRIDE_INL_H_
