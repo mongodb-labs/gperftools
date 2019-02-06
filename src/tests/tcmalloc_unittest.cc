@@ -1290,6 +1290,7 @@ static int RunAllTests(int argc, char** argv) {
     free(p1);
     VerifyDeleteHookWasCalled();
 
+#if HAVE_DECL_CFREE || !defined(TCMALLOC_DISABLE_LIBC_OVERRIDE) || TCMALLOC_DISABLE_LIBC_OVERRIDE != 1
     p1 = calloc(10, 2);
     CHECK(p1 != NULL);
     VerifyNewHookWasCalled();
@@ -1302,6 +1303,7 @@ static int RunAllTests(int argc, char** argv) {
     VerifyDeleteHookWasCalled();
     cfree(p1);  // synonym for free
     VerifyDeleteHookWasCalled();
+#endif
 
     if (kOSSupportsMemalign) {
       CHECK_EQ(PosixMemalign(&p1, sizeof(p1), 40), 0);
