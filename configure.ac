@@ -44,6 +44,7 @@ default_enable_heap_checker=yes
 default_enable_debugalloc=yes
 default_enable_minimal=no
 default_tcmalloc_alignment=16
+default_libc_override=yes
 need_nanosleep=yes   # Used later, to decide if to run ACX_NANOSLEEP
 case "$host" in
    *-mingw*) default_enable_minimal=yes; default_enable_debugalloc=no;
@@ -141,6 +142,15 @@ case "$with_tcmalloc_alignment" in
   *)
        AC_MSG_WARN([${with_tcmalloc_alignment} bytes not supported, using default tcmalloc allocation alignment.])
 esac
+AC_ARG_ENABLE([libc-override],
+              [AS_HELP_STRING([--disable-libc-override],
+                              [do not override malloc in libc])],
+              [],
+              [enable_libc_override="$default_libc_override"])
+AS_IF([test "x$enable_libc_override" = "xno"],
+      [AC_DEFINE([TCMALLOC_DISABLE_LIBC_OVERRIDE], 1,
+                 [Define to 1 to disable malloc override in libc.])],
+      [])
 
 # Checks for programs.
 AC_PROG_CXX
