@@ -326,6 +326,9 @@
 /* Define 64K of internal pages size for tcmalloc */
 /* #undef TCMALLOC_64K_PAGES */
 
+/* Define to 1 to try to reduce the number of size classes. */
+/* #undef TCMALLOC_AGGRESSIVE_MERGE */
+
 /* Define 8 bytes of allocation alignment for tcmalloc */
 /* #undef TCMALLOC_ALIGN_8BYTES */
 
