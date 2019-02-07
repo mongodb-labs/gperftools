@@ -44,11 +44,8 @@ default_enable_heap_checker=yes
 default_enable_debugalloc=yes
 default_enable_minimal=no
 default_tcmalloc_alignment=16
-<<<<<<< HEAD
-default_libc_override=yes
-=======
 default_tcmalloc_maxsize=256
->>>>>>> c003846... Allow kMaxSize to be configurable.
+default_libc_override=yes
 need_nanosleep=yes   # Used later, to decide if to run ACX_NANOSLEEP
 case "$host" in
    *-mingw*) default_enable_minimal=yes; default_enable_debugalloc=no;
