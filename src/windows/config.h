@@ -320,11 +320,8 @@
 /* the namespace where STL code like vector<> is defined */
 #define STL_NAMESPACE std
 
-/* Define 32K of internal pages size for tcmalloc */
-/* #undef TCMALLOC_32K_PAGES */
-
-/* Define 64K of internal pages size for tcmalloc */
-/* #undef TCMALLOC_64K_PAGES */
+/* Define max size of cached allocations for tcmalloc */
+/* #undef TCMALLOC_MAX_SIZE_KB */
 
 /* Define to 1 to try to reduce the number of size classes. */
 /* #undef TCMALLOC_AGGRESSIVE_MERGE */
