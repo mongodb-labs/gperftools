@@ -168,14 +168,13 @@ case "$with_tcmalloc_alignment" in
 esac
 
 case "$with_tcmalloc_maxsize" in
-  4|8|16|32|64|128)
+  4|8|16|32|64|128|256)
        AC_DEFINE_UNQUOTED(TCMALLOC_MAX_SIZE_KB, [$with_tcmalloc_maxsize],
           [Define max size of cached allocations for tcmalloc]);;
-  256)
-       #Default tcmalloc max size.
-       ;;
   *)
        AC_MSG_WARN([${with_tcmalloc_maxsize}K size not supported, using default tcmalloc max size.])
+       AC_DEFINE_UNQUOTED(TCMALLOC_MAX_SIZE_KB, [$default_tcmalloc_maxsize],
+          [Define max size of cached allocations for tcmalloc]);;
 esac
 
 AC_ARG_ENABLE([libc-override],
