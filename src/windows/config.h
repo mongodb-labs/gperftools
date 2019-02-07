@@ -323,6 +323,9 @@
 /* Define max size of cached allocations for tcmalloc */
 /* #undef TCMALLOC_MAX_SIZE_KB */
 
+/* Define internal page size for tcmalloc as number of left bitshift */
+/* #undef TCMALLOC_PAGE_SIZE_SHIFT */
+
 /* Define to 1 to try to reduce the number of size classes. */
 /* #undef TCMALLOC_AGGRESSIVE_MERGE */
 
