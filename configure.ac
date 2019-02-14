@@ -136,6 +136,26 @@ AS_IF([test "x$enable_tcmalloc_aggressive_merge" = "xyes"],
                  [Define to 1 to try to reduce the number of size classes.])],
       [])
 
+AC_ARG_ENABLE([tcmalloc-target-transfer-kb],
+              AS_HELP_STRING([--enable-tcmalloc-target-transfer-kb],
+                             [Optimal transfer size between thread and central caches,
+                              in kiB [default=64]]),
+              [],
+              [enable_tcmalloc_target_transfer_kb=64])
+AC_DEFINE_UNQUOTED(TCMALLOC_TARGET_TRANSFER_KB,
+                   [$enable_tcmalloc_target_transfer_kb],
+                   [Optimal transfer size between thread and central caches])
+
+AC_ARG_ENABLE([tcmalloc-objects-per-block],
+              AS_HELP_STRING([--enable-tcmalloc-objects-per-block],
+                             [The "/4" divisor in the "blocks_to_move" loop of "SizeMap::Init"
+                              [default=4]]),
+              [],
+              [enable_tcmalloc_objects_per_block=4])
+AC_DEFINE_UNQUOTED(TCMALLOC_OBJECTS_PER_BLOCK,
+                   [$enable_tcmalloc_objects_per_block],
+                   [The "/4" divisor in the "blocks_to_move" loop of "SizeMap::Init"])
+
 case "$with_tcmalloc_pagesize" in
   4)
        AC_DEFINE(TCMALLOC_PAGE_SIZE_SHIFT, 12);;
