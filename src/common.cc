@@ -195,6 +195,25 @@ int SizeMap::NumMoveSize(size_t size) {
   return num;
 }
 
+// Calculate # of pages to give a size class.
+size_t SizeMap::PagesForSizeClass(size_t size) {
+    int blocks_to_move = kUseUnclampedTransferSizes ?
+      (kTargetTransferBytes / size) : (NumMoveSize(size) / 4);
+    size_t psize = 0;
+    do {
+      psize += kPageSize;
+      // Allocate enough pages so leftover is less than 1/8 of total.
+      // This bounds wasted space to at most 12.5%.
+      while ((psize % size) > (psize >> 3)) {
+        psize += kPageSize;
+      }
+      // Continue to add pages until there are at least as many objects in
+      // the span as are needed when moving objects from the central
+      // freelists and spans to the thread caches.
+    } while ((psize / size) < (blocks_to_move));
+    return psize >> kPageShift;
+}
+
 // Initialize the mapping arrays
 void SizeMap::Init() {
   InitTCMallocTransferNumObjects();
@@ -209,32 +228,24 @@ void SizeMap::Init() {
         "Invalid class index for kMaxSize", ClassIndex(kMaxSize));
   }
 
+  static const bool kDiagInit = true;
+  if (kDiagInit) {
+      for (size_t size = kAlignment; size <= kMaxSize; size += AlignmentForSize(size)) {
+          Log(kLog, __FILE__, __LINE__, "(size,NumMoveSize,PagesForSizeClass)",
+              size, NumMoveSize(size), PagesForSizeClass(size));
+      }
+  }
+
   // Compute the size classes we want to use
   int sc = 1;   // Next size class to assign
   int merge_edge = sc;  // leftmost boundary of merge evaluation.
   CHECK_CONDITION(kAlignment <= kMinAlign);
   for (size_t size = kAlignment; size <= kMaxSize; size += AlignmentForSize(size)) {
     CHECK_CONDITION((size % AlignmentForSize(size)) == 0);
-    int blocks_to_move = kUseUnclampedTransferSizes ?
-      (kTargetTransferBytes / size) : (NumMoveSize(size) / 4);
-
-    size_t psize = 0;
-    do {
-      psize += kPageSize;
-      // Allocate enough pages so leftover is less than 1/8 of total.
-      // This bounds wasted space to at most 12.5%.
-      while ((psize % size) > (psize >> 3)) {
-        psize += kPageSize;
-      }
-      // Continue to add pages until there are at least as many objects in
-      // the span as are needed when moving objects from the central
-      // freelists and spans to the thread caches.
-    } while ((psize / size) < (blocks_to_move));
-    const size_t my_pages = psize >> kPageShift;
 
     // Add new class
     CHECK_CONDITION(sc < kClassSizesMax);
-    class_to_pages_[sc] = my_pages;
+    class_to_pages_[sc] = PagesForSizeClass(size);
     class_to_size_[sc] = size;
     sc++;
 

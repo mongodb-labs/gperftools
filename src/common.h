@@ -229,6 +229,9 @@ class SizeMap {
 
   int NumMoveSize(size_t size);
 
+  // Calculate # of pages to give a size class.
+  size_t PagesForSizeClass(size_t size);
+
   // Mapping from size class to max size storable in that class
   int32 class_to_size_[kClassSizesMax];
 
