@@ -53,7 +53,7 @@ static const bool kUseAggressiveMerge = false;
 #endif
 
 static const size_t kTargetTransferBytes = TCMALLOC_TARGET_TRANSFER_KB * 1024;
-static const size_t kObjectsPerBlock = TCMALLOC_OBJECTS_PER_BLOCK;
+static const bool kUseUnclampedTransferSizes = TCMALLOC_USE_UNCLAMPED_TRANSFER_SIZES;
 
 // The init function is provided to explicit initialize the variable value
 // from the env. var to avoid C++ global construction that might defer its
@@ -215,8 +215,9 @@ void SizeMap::Init() {
   CHECK_CONDITION(kAlignment <= kMinAlign);
   for (size_t size = kAlignment; size <= kMaxSize; size += AlignmentForSize(size)) {
     CHECK_CONDITION((size % AlignmentForSize(size)) == 0);
+    int blocks_to_move = kUseUnclampedTransferSizes ?
+      (kTargetTransferBytes / size) : (NumMoveSize(size) / 4);
 
-    int blocks_to_move = NumMoveSize(size) / kObjectsPerBlock;
     size_t psize = 0;
     do {
       psize += kPageSize;

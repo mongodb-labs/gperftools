@@ -146,15 +146,19 @@ AC_DEFINE_UNQUOTED(TCMALLOC_TARGET_TRANSFER_KB,
                    [$enable_tcmalloc_target_transfer_kb],
                    [Optimal transfer size between thread and central caches])
 
-AC_ARG_ENABLE([tcmalloc-objects-per-block],
-              AS_HELP_STRING([--enable-tcmalloc-objects-per-block],
-                             [The "/4" divisor in the "blocks_to_move" loop of "SizeMap::Init"
-                              [default=4]]),
+AC_ARG_ENABLE([tcmalloc-unclamped-transfer-sizes],
+              AS_HELP_STRING([--enable-unclamped-transfer-sizes],
+                             [A detail of the "blocks_to_move" loop of "SizeMap::Init"]),
               [],
-              [enable_tcmalloc_objects_per_block=4])
-AC_DEFINE_UNQUOTED(TCMALLOC_OBJECTS_PER_BLOCK,
-                   [$enable_tcmalloc_objects_per_block],
-                   [The "/4" divisor in the "blocks_to_move" loop of "SizeMap::Init"])
+              [])
+
+unclamped_transfer_sizes=0
+AS_IF([test "x$enable_unclamped_transfer_sizes" = "xyes"],
+      [unclamped_transfer_sizes=1],
+      [])
+AC_DEFINE_UNQUOTED(TCMALLOC_USE_UNCLAMPED_TRANSFER_SIZES,
+                   [$unclamped_transfer_sizes],
+                   [A detail of the "blocks_to_move" loop of "SizeMap::Init"])
 
 case "$with_tcmalloc_pagesize" in
   4)
