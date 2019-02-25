@@ -52,6 +52,14 @@ static const bool kUseAggressiveMerge = true;
 static const bool kUseAggressiveMerge = false;
 #endif
 
+static const size_t kTargetTransferBytes = TCMALLOC_TARGET_TRANSFER_KB * 1024;
+
+#if TCMALLOC_USE_UNCLAMPED_TRANSFER_SIZES
+static const bool kUseUnclampedTransferSizes = true;
+#else
+static const bool kUseUnclampedTransferSizes = false;
+#endif
+
 // The init function is provided to explicit initialize the variable value
 // from the env. var to avoid C++ global construction that might defer its
 // initialization after a malloc/new call.
@@ -172,8 +180,8 @@ static bool MergeOkayByNaturalAlignment(const int32 *class_to_size, size_t first
 
 int SizeMap::NumMoveSize(size_t size) {
   if (size == 0) return 0;
-  // Use approx 64k transfers between thread and central caches.
-  int num = static_cast<int>(64.0 * 1024.0 / size);
+  // Size of transfers between thread and central caches.
+  int num = kTargetTransferBytes / size;
   if (num < 2) num = 2;
 
   // Avoid bringing too many objects into small object free lists.
@@ -212,8 +220,8 @@ void SizeMap::Init() {
   CHECK_CONDITION(kAlignment <= kMinAlign);
   for (size_t size = kAlignment; size <= kMaxSize; size += AlignmentForSize(size)) {
     CHECK_CONDITION((size % AlignmentForSize(size)) == 0);
-
-    int blocks_to_move = NumMoveSize(size) / 4;
+    size_t blocks_to_move = kUseUnclampedTransferSizes ?
+        (kTargetTransferBytes / size) : (NumMoveSize(size) / 4);
     size_t psize = 0;
     do {
       psize += kPageSize;
