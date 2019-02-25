@@ -227,10 +227,10 @@ class SizeMap {
   // per-thread free list until the scavenger cleans up the list.
   int num_objects_to_move_[kClassSizesMax];
 
-  int NumMoveSize(size_t size);
+  int NumMoveSize(size_t size) const;
 
-  // Calculate # of pages to give a size class.
-  size_t PagesForSizeClass(size_t size);
+  // Compute # of pages to give a size class.
+  size_t ComputePagesForSizeClass(size_t size) const;
 
   // Mapping from size class to max size storable in that class
   int32 class_to_size_[kClassSizesMax];

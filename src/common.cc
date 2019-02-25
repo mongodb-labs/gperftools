@@ -173,9 +173,9 @@ static bool MergeOkayByNaturalAlignment(const int32 *class_to_size, size_t first
   return true;
 }
 
-int SizeMap::NumMoveSize(size_t size) {
+int SizeMap::NumMoveSize(size_t size) const {
   if (size == 0) return 0;
-  // Use approx 64k transfers between thread and central caches.
+  // Use appropriately-sized transfers between thread and central caches.
   int num = kTargetTransferBytes /size;
   if (num < 2) num = 2;
 
@@ -195,10 +195,10 @@ int SizeMap::NumMoveSize(size_t size) {
   return num;
 }
 
-// Calculate # of pages to give a size class.
-size_t SizeMap::PagesForSizeClass(size_t size) {
-    int blocks_to_move = kUseUnclampedTransferSizes ?
-      (kTargetTransferBytes / size) : (NumMoveSize(size) / 4);
+size_t SizeMap::ComputePagesForSizeClass(size_t size) const {
+    size_t blocks_to_move = kUseUnclampedTransferSizes
+        ? (kTargetTransferBytes / size)
+        : (NumMoveSize(size) / 4);
     size_t psize = 0;
     do {
       psize += kPageSize;
@@ -210,7 +210,7 @@ size_t SizeMap::PagesForSizeClass(size_t size) {
       // Continue to add pages until there are at least as many objects in
       // the span as are needed when moving objects from the central
       // freelists and spans to the thread caches.
-    } while ((psize / size) < (blocks_to_move));
+    } while ((psize / size) < blocks_to_move);
     return psize >> kPageShift;
 }
 
@@ -230,10 +230,17 @@ void SizeMap::Init() {
 
   static const bool kDiagInit = true;
   if (kDiagInit) {
+#define LX_(x) Log(kLog, __FILE__, __LINE__, "(" #x ")", x)
+      LX_(kPageSize);
+      LX_(kUseUnclampedTransferSizes);
+      LX_(kUseAggressiveMerge);
+      LX_(kTargetTransferBytes);
+      LX_(FLAGS_tcmalloc_transfer_num_objects);
       for (size_t size = kAlignment; size <= kMaxSize; size += AlignmentForSize(size)) {
-          Log(kLog, __FILE__, __LINE__, "(size,NumMoveSize,PagesForSizeClass)",
-              size, NumMoveSize(size), PagesForSizeClass(size));
+          Log(kLog, __FILE__, __LINE__, "(size,mv,pg)",
+              size, NumMoveSize(size), ComputePagesForSizeClass(size));
       }
+#undef LX_
   }
 
   // Compute the size classes we want to use
@@ -245,7 +252,7 @@ void SizeMap::Init() {
 
     // Add new class
     CHECK_CONDITION(sc < kClassSizesMax);
-    class_to_pages_[sc] = PagesForSizeClass(size);
+    class_to_pages_[sc] = ComputePagesForSizeClass(size);
     class_to_size_[sc] = size;
     sc++;
 

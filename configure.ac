@@ -152,12 +152,12 @@ AC_ARG_ENABLE([tcmalloc-unclamped-transfer-sizes],
               [],
               [])
 
-unclamped_transfer_sizes=0
-AS_IF([test "x$enable_unclamped_transfer_sizes" = "xyes"],
-      [unclamped_transfer_sizes=1],
+use_unclamped_transfer_sizes=0
+AS_IF([test "x$enable_tcmalloc_unclamped_transfer_sizes" = "xyes"],
+      [use_unclamped_transfer_sizes=1],
       [])
 AC_DEFINE_UNQUOTED(TCMALLOC_USE_UNCLAMPED_TRANSFER_SIZES,
-                   [$unclamped_transfer_sizes],
+                   [$use_unclamped_transfer_sizes],
                    [A detail of the "blocks_to_move" loop of "SizeMap::Init"])
 
 case "$with_tcmalloc_pagesize" in
