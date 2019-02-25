@@ -45,6 +45,8 @@ default_enable_debugalloc=yes
 default_enable_minimal=no
 default_tcmalloc_alignment=16
 default_tcmalloc_maxsize=256
+default_tcmalloc_target_transfer_kb=64
+default_tcmalloc_unclamped_transfer_sizes=no
 default_libc_override=yes
 need_nanosleep=yes   # Used later, to decide if to run ACX_NANOSLEEP
 case "$host" in
@@ -134,6 +136,25 @@ AC_ARG_ENABLE([tcmalloc-aggressive-merge],
 AS_IF([test "x$enable_tcmalloc_aggressive_merge" = "xyes"],
       [AC_DEFINE([TCMALLOC_AGGRESSIVE_MERGE], 1,
                  [Define to 1 to try to reduce the number of size classes.])],
+      [])
+
+AC_ARG_ENABLE([tcmalloc-target-transfer-kb],
+              AS_HELP_STRING([--enable-tcmalloc-target-transfer-kb],
+                             [Optimal transfer size (in KB) between thread and central caches.]),
+              [],
+              [enable_tcmalloc_target_transfer_kb=$default_tcmalloc_target_transfer_kb])
+AC_DEFINE_UNQUOTED(TCMALLOC_TARGET_TRANSFER_KB,
+                   [$enable_tcmalloc_target_transfer_kb],
+                   [Optimal transfer size between thread and central caches])
+
+AC_ARG_ENABLE([tcmalloc-unclamped-transfer-sizes],
+              AS_HELP_STRING([--enable-tcmalloc-unclamped-transfer-sizes],
+                             [A detail of the "blocks_to_move" loop of "SizeMap::Init"]),
+              [],
+              [enable_tcmalloc_unclamped_transfer_sizes=$default_tcmalloc_unclamped_transfer_sizes])
+AS_IF([test "x$enable_tcmalloc_unclamped_transfer_sizes" = "xyes"],
+      [AC_DEFINE_UNQUOTED(TCMALLOC_USE_UNCLAMPED_TRANSFER_SIZES, 1,
+                          [A detail of the "blocks_to_move" loop of "SizeMap::Init"])],
       [])
 
 case "$with_tcmalloc_pagesize" in
