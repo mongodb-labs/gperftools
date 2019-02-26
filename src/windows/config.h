@@ -320,12 +320,6 @@
 /* the namespace where STL code like vector<> is defined */
 #define STL_NAMESPACE std
 
-/* Define max size of cached allocations for tcmalloc */
-/* #undef TCMALLOC_MAX_SIZE_KB */
-
-/* Define internal page size for tcmalloc as number of left bitshift */
-/* #undef TCMALLOC_PAGE_SIZE_SHIFT */
-
 /* Define to 1 to try to reduce the number of size classes. */
 /* #undef TCMALLOC_AGGRESSIVE_MERGE */
 
@@ -334,6 +328,18 @@
 
 /* Define to 0 to disable malloc override in libc. */
 #define TCMALLOC_ENABLE_LIBC_OVERRIDE 1
+
+/* Define max size of cached allocations for tcmalloc */
+/* #undef TCMALLOC_MAX_SIZE_KB */
+
+/* Define internal page size for tcmalloc as number of left bitshift */
+/* #undef TCMALLOC_PAGE_SIZE_SHIFT */
+
+/* Optimal transfer size between thread and central caches */
+#define TCMALLOC_TARGET_TRANSFER_KB 64
+
+/* A detail of the "blocks_to_move" loop of "SizeMap::Init" */
+/* #undef TCMALLOC_USE_UNCLAMPED_TRANSFER_SIZES */
 
 /* Version number of package */
 #define VERSION "2.7"
