@@ -44,6 +44,7 @@ default_enable_heap_checker=yes
 default_enable_debugalloc=yes
 default_enable_minimal=no
 default_tcmalloc_alignment=16
+default_tcmalloc_mallinfo=yes
 default_tcmalloc_maxsize=256
 default_tcmalloc_target_transfer_kb=64
 default_tcmalloc_unclamped_transfer_sizes=no
@@ -157,6 +158,14 @@ AS_IF([test "x$enable_tcmalloc_unclamped_transfer_sizes" = "xyes"],
                           [A detail of the "blocks_to_move" loop of "SizeMap::Init"])],
       [])
 
+# MongoDB modification needed because we don't run configure everywhere we build.
+# We don't use mallinfo anyway. It's an obsolete int-based stats API.
+AC_ARG_ENABLE([tcmalloc-mallinfo],
+              [AS_HELP_STRING([--disable-tcmalloc-mallinfo],
+                              [Disable tc_mallinfo unconditionally])],
+              [],
+              [enable_tcmalloc_mallinfo=$default_tcmalloc_mallinfo])
+
 case "$with_tcmalloc_pagesize" in
   4)
        AC_DEFINE(TCMALLOC_PAGE_SIZE_SHIFT, 12);;
@@ -254,7 +263,9 @@ AC_HEADER_STDC
 
 # TODO(csilvers): we could remove a lot when WITH_CPU_PROFILER etc is "no".
 AC_CHECK_TYPES([__int64])       # defined in some windows platforms
-AC_CHECK_TYPES([struct mallinfo],,, [#include <malloc.h>])
+AS_IF([test "x$enable_tcmalloc_mallinfo" = "xyes"],
+      [AC_CHECK_TYPES([struct mallinfo],,, [#include <malloc.h>])],
+      [])
 AC_CHECK_TYPES([Elf32_Versym],,, [#include <elf.h>])   # for vdso_support.h
 AC_CHECK_FUNCS(sbrk)            # for tcmalloc to get memory
 AC_CHECK_FUNCS(geteuid)         # for turning off services when run as root
